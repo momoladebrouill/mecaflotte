@@ -1,0 +1,88 @@
+---
+title: Methode de simulation de fluides par grille
+header-includes:
+    - \usepackage{amsmath}
+---
+
+`velocity` is stored at the middle of each segment of the grid, and `density` is stored at the center of each cell.  
+3 steps are needed to simulate the fluid:
+
+- Modify velocity values
+- Make the fluid incompressible
+- Move the velocity field
+
+We will use the following notations and values:
+```{eval=FALSE}
+alpha = 1.9
+velocity : (u,v)
+```
+
+dans les schemas :
+$u_{i,j}$ est à gauche et
+$v_{i,j}$ est en bas.  
+on accède ensuite à la valeur des cases environnantes
+
+# 1 Modify velocity values : add gravity
+
+$$v = v - dt * g$$
+
+# 2 Make the fluid incompressible : projection
+
+on a besoin de la divergence :
+$$d = u_{i+1,j} - u_{i,j} + v_{i,j+1} - v_{i,j} $$
+où :
+
+- v est le vecteur en bas de la cellule (verticaux)
+- u est le vecteur à gauche de la cellule (horizontaux)
+- s est l'indicatrice d'une simulation : vaut `0` si la case est un mur
+
+$d$ doit toujour être à 0 pour garder l'incompressibilité, pour ça, on update avec :
+```{ocaml,eval=FALSE}
+let s = sum (i,j) in
+let d' = alpha * d / s in
+u(i,j) = u(i,j) + d' * s(i-1,j)
+u(i+1,j) = u(i+1,j) - d' * s(i+1,j)
+v(i,j) = v(i,j) + d' * s(i,j-1)
+v(i,j+1) = v(i,j+1) - d'*s(i,j+1)    
+```
+Si c'est un mur, on s'en fout de la valeur de $(u,v)$ parce que ça sera toujours mulitplié par 0.
+
+
+On répète N (entre 40 et 100) fois ce process, pour résoudre la `grid`.
+à chaque étape de la boucle N, on a la pression par: $$P = P + d'/s_{tot}$$
+
+# 2 Move the velocity field : advection
+
+Pour chaque coté, on fait la moyenne des verticaux autour:
+```{bash,eval=FALSE}
+\ /
+ x
+/ \
+```
+On cherche ici à trouver le prochain u, et il faudra faire de même pour trouver v.
+
+On va chercher la vitesse en u à la position qu'avait la cellule avant d'arriver en $t+dt$ dans notre cellule.
+On considère $v = (u,v)$.
+On trouve "l'ancienne" position en allant chercher en `x - dt*v` 
+Le truc, c'est que le u n'est pas stocké au milieu de la cellule, mais à gauche, sur le bord, donc v n'est pas juste le v en bas de la cellule.
+On prend v en faisant la moyenne des v autour de la source (c'est à dire autour de u).
+
+On a donc une position initiale, là d'où vient la particule avant d'arriver là où je stocke u.
+
+> Pour avoir le u de cette source, on passe par une matrice de poids :
+\[
+\begin{bmatrix}
+1-x/h & x/h \\
+1-y/h & y/h \\
+\end{bmatrix}
+\]
+où h est la taille de la cellule.
+L'exemple est donné pour v, mais c'est pareil pour u.
+On fait alors la somme des u autour de la source multiplié par les poids.
+$$u_{n+1} = w_{00} w_{10} u_{i,j} + w_{01} w_{10} u_{i+1,j} + w_{01} w_{11} u_{i,j+1} + w_{00} w_{11} u_{i+1,j+1}$$
+
+pareil pour v
+
+Pour la vapeur, on regarde la densité dans la cellule, c'est une valeur entre 0 et 1
+On l'advecte comme lorsqu'on faisait la moyenne des u.
+La nouvelle densité devient la moyenne de celle qui il y avait à la cellule d'avant et de celle qu'il y a maintenant, et on laisse tourner la velocité toute seule, on la densité vit en dépend de la vélocité mais ne la modifie pas.
