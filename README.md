@@ -1,9 +1,6 @@
-# 3D physics 
+# Meca flotte
 
-Pour faire des simulations cool en 3D  
-Pour l'instant j'utilise raylib 3D mais peut être qu'a terme je ferai mon propre 3D engine
-## Objectifs :
-- déplacement dans la bas canonique
-- chute
-- ballon
+Objectif :
+- avoir un semblant de simulation de fluide stable et efficace en mémoire et en temps de calcul mdr
 
+Voir le fichier `method.pdf` pour voir la méthode utilisée, inspiré de [cette vidéo](https://youtu.be/iKAVRgIrUOU?si=ErL2LadOMsm4WsFB)
