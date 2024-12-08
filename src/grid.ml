@@ -5,13 +5,15 @@ type 'a t = {
     height:int;
 }
 
-let make n m init = {
-    tab = Array.init n (fun _ -> Array.make m init);
+
+let make default n m init = {
+    tab = Array.init m (fun _ -> Array.make n init);
     width = n;
+    default = default;
     height = m;
 }
 
-let iteri f grid =
+let iteri f grid = 
     Array.iteri (fun i row ->
         Array.iteri (fun j cell ->
             f (i,j) cell)
@@ -26,6 +28,16 @@ let mapi f grid = {
     grid.tab;
     width = grid.width;
     height = grid.height;
+    default = grid.default;
+}
+
+let map f grid = {
+    tab = Array.map (fun row ->
+        Array.map f row)
+    grid.tab;
+    width = grid.width;
+    height = grid.height;
+    default = grid.default;
 }
 
 let fold_left f v0 grid =
@@ -34,11 +46,11 @@ let fold_left f v0 grid =
             f acc2 e) acc1 t)
     v0 grid.tab
 
-let set grid x y v =
-    grid.tab.(x).(y) <- v
+let set grid (x,y) v =
+    grid.tab.(y).(x) <- v
 
-let get grid x y =
+let get grid (x,y) =
     if x < 0 || x >= grid.width || y < 0 || y >= grid.height then
         grid.default
     else
-        grid.tab.(x).(y)
+        grid.tab.(y).(x)
