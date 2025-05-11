@@ -16,14 +16,14 @@ let make default n m init = {
 let iteri f grid = 
     Array.iteri (fun i row ->
         Array.iteri (fun j cell ->
-            f (i,j) cell)
+            f (j,i) cell)
         row)
     grid.tab
 
 let mapi f grid = {
     tab = Array.mapi (fun i row ->
         Array.mapi (fun j cell ->
-            f (i,j) cell)
+            f (j,i) cell)
         row)
     grid.tab;
     width = grid.width;
@@ -32,9 +32,7 @@ let mapi f grid = {
 }
 
 let map f grid = {
-    tab = Array.map (fun row ->
-        Array.map f row)
-    grid.tab;
+    tab = Array.map (fun row -> Array.map f row) grid.tab;
     width = grid.width;
     height = grid.height;
     default = grid.default;
